@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UserCreator
@@ -11,7 +12,12 @@ namespace UserCreator
 
         public async Task WriteDataToCsv(TextWriter textWriter, string fieldName, object data)
         {
-            await textWriter.WriteLineAsync($"{nextId++},{fieldName},{data}");
+            await textWriter.WriteLineAsync($"{GetNextId()},{fieldName},{data}");
+        }
+
+        private int GetNextId()
+        {
+            return Interlocked.Increment(ref nextId);
         }
 
         public bool TryConvertData(string input, out T data)
