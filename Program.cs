@@ -8,34 +8,45 @@ namespace UserCreator
     {
         static async Task<int> Main(string[] args)
         {
-            string fieldType;
             if(args.Length != 1)
             {
-                await Console.Out.WriteLineAsync($"Usage: UserCreator [outputfile]");
+                await Console.Out.WriteLineAsync("Usage: UserCreator [outputfile]");
                 return 1;
             }
 
-            await using var outputFile = File.OpenWrite(args[0]);
+            string outputFilePath = args[0];
+            await using var outputFile = File.OpenWrite(outputFilePath);
             await using var outputFileWriter = new StreamWriter(outputFile);
 
-            while(!string.IsNullOrEmpty(fieldType = await GetFieldType()))
-            {
-                if(string.Equals("DateOfBirth", fieldType, StringComparison.CurrentCultureIgnoreCase))
-                {
-                    await WriteUserDataToFile<DateTime>(fieldType, outputFileWriter);
-                }
-                else if(string.Equals("Salary", fieldType, StringComparison.CurrentCultureIgnoreCase))
-                {
-                    await WriteUserDataToFile<decimal>(fieldType, outputFileWriter);
-                }
-                else
-                {
-                    await WriteUserDataToFile<string>(fieldType, outputFileWriter);
-                }
+            await ProcessUserFields(outputFileWriter);
 
-                Console.WriteLine($"============");
-            }
             return 0;
+        }
+
+         static async Task ProcessUserFields(StreamWriter outputFileWriter)
+        {
+            string fieldType;
+            while (!string.IsNullOrEmpty(fieldType = await GetFieldType()))
+            {
+                await ProcessField(fieldType, outputFileWriter);
+                Console.WriteLine("============");
+            }
+        }
+
+         static async Task ProcessField(string fieldType, StreamWriter outputFileWriter)
+        {
+            if (string.Equals("DateOfBirth", fieldType, StringComparison.CurrentCultureIgnoreCase))
+            {
+                await WriteUserDataToFile<DateTime>(fieldType, outputFileWriter);
+            }
+            else if (string.Equals("Salary", fieldType, StringComparison.CurrentCultureIgnoreCase))
+            {
+                await WriteUserDataToFile<decimal>(fieldType, outputFileWriter);
+            }
+            else
+            {
+                await WriteUserDataToFile<string>(fieldType, outputFileWriter);
+            }
         }
 
         private static async Task WriteUserDataToFile<TDataType>(string fieldName, StreamWriter streamWriter)
@@ -50,7 +61,7 @@ namespace UserCreator
 
         static async Task<string> GetFieldType()
         {
-            await Console.Out.WriteLineAsync($"Please enter field, or enter to exit");
+            await Console.Out.WriteLineAsync("Please enter field, or enter to exit");
             return await Console.In.ReadLineAsync();
         }
 
