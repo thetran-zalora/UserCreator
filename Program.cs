@@ -54,7 +54,7 @@ namespace UserCreator
             }
         }
 
-        static async Task ProcessField(string fieldType, StreamWriter outputFileWriter)
+        public static async Task ProcessField(string fieldType, StreamWriter outputFileWriter)
         {
             if (string.Equals("DateOfBirth", fieldType, StringComparison.CurrentCultureIgnoreCase))
             {
