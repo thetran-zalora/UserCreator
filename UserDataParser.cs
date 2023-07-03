@@ -8,7 +8,8 @@ namespace UserCreator
 {
     public class UserDataParser<T> : IUserDataEnterer
     {
-        public static int nextId;
+        private static int nextId = 0;
+        private static readonly object nextIdLock = new object();
 
         public async Task WriteDataToCsv(TextWriter textWriter, string fieldName, object data)
         {
@@ -17,7 +18,12 @@ namespace UserCreator
 
         private int GetNextId()
         {
-            return Interlocked.Increment(ref nextId);
+            int id;
+            lock (nextIdLock)
+            {
+                id = Interlocked.Increment(ref nextId);
+            }
+            return id;
         }
 
         public bool TryConvertData(string input, out T data)
