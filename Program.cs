@@ -8,32 +8,53 @@ namespace UserCreator
     {
         static async Task<int> Main(string[] args)
         {
-            if(args.Length != 1)
+            if (args.Length != 1)
             {
                 await Console.Out.WriteLineAsync("Usage: UserCreator [outputfile]");
                 return 1;
             }
 
             string outputFilePath = args[0];
+
             await using var outputFile = File.OpenWrite(outputFilePath);
             await using var outputFileWriter = new StreamWriter(outputFile);
 
-            await ProcessUserFields(outputFileWriter);
+            try
+            {
+                await ProcessUserFields(outputFileWriter);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                return 1;
+            }
+            finally
+            {
+                outputFileWriter.Flush();
+            }
 
             return 0;
         }
 
-         static async Task ProcessUserFields(StreamWriter outputFileWriter)
+        static async Task ProcessUserFields(StreamWriter outputFileWriter)
         {
             string fieldType;
             while (!string.IsNullOrEmpty(fieldType = await GetFieldType()))
             {
-                await ProcessField(fieldType, outputFileWriter);
-                Console.WriteLine("============");
+                try
+                {
+                    await ProcessField(fieldType, outputFileWriter);
+                    Console.WriteLine("============");
+                    outputFileWriter.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                }
             }
         }
 
-         static async Task ProcessField(string fieldType, StreamWriter outputFileWriter)
+        static async Task ProcessField(string fieldType, StreamWriter outputFileWriter)
         {
             if (string.Equals("DateOfBirth", fieldType, StringComparison.CurrentCultureIgnoreCase))
             {
@@ -49,11 +70,11 @@ namespace UserCreator
             }
         }
 
-        private static async Task WriteUserDataToFile<TDataType>(string fieldName, StreamWriter streamWriter)
+        static async Task WriteUserDataToFile<TDataType>(string fieldName, StreamWriter streamWriter)
         {
             var userDataParser = new UserDataParser<TDataType>();
             var dataAsString = await GetData(fieldName);
-            if(userDataParser.TryConvertData(dataAsString, out var data))
+            if (userDataParser.TryConvertData(dataAsString, out var data))
             {
                 await userDataParser.WriteDataToCsv(streamWriter, fieldName, data);
             }
@@ -61,7 +82,7 @@ namespace UserCreator
 
         static async Task<string> GetFieldType()
         {
-            await Console.Out.WriteLineAsync("Please enter field, or enter to exit");
+            await Console.Out.WriteLineAsync("Please enter a field, or press Enter to exit:");
             return await Console.In.ReadLineAsync();
         }
 
@@ -70,7 +91,5 @@ namespace UserCreator
             await Console.Out.WriteLineAsync($"Please enter user's {fieldName}:");
             return await Console.In.ReadLineAsync();
         }
-
     }
-
 }
